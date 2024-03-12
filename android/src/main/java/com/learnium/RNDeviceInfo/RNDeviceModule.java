@@ -122,7 +122,7 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
         }
 
         if(mLastBatteryLevel != batteryLevel) {
-            sendEvent(getReactApplicationContext(), "RNDeviceInfo_batteryLevelDidChange", batteryLevel);
+          sendEvent(getReactApplicationContext(), "RNDeviceInfo_batteryLevelDidChange", batteryLevel);
 
           if(batteryLevel <= .15) {
             sendEvent(getReactApplicationContext(), "RNDeviceInfo_batteryLevelIsLow", batteryLevel);
@@ -133,7 +133,12 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
       }
     };
 
-    getReactApplicationContext().registerReceiver(receiver, filter);
+    if (Build.VERSION.SDK_INT >= 34 && getReactApplicationContext().getApplicationInfo().targetSdkVersion >= 34) {
+      getReactApplicationContext().registerReceiver(
+              receiver, filter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+      getReactApplicationContext().registerReceiver(receiver, filter);
+    }
     initializeHeadphoneConnectionReceiver();
   }
 
@@ -150,7 +155,12 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
       }
     };
 
-    getReactApplicationContext().registerReceiver(headphoneConnectionReceiver, filter);
+    if (Build.VERSION.SDK_INT >= 34 && getReactApplicationContext().getApplicationInfo().targetSdkVersion >= 34) {
+      getReactApplicationContext().registerReceiver(
+              headphoneConnectionReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+      getReactApplicationContext().registerReceiver(headphoneConnectionReceiver, filter);
+    }
   }
 
 
@@ -288,11 +298,11 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
     try {
       return
               InetAddress.getByAddress(
-                      ByteBuffer
-                              .allocate(4)
-                              .order(ByteOrder.LITTLE_ENDIAN)
-                              .putInt(getWifiInfo().getIpAddress())
-                              .array())
+                              ByteBuffer
+                                      .allocate(4)
+                                      .order(ByteOrder.LITTLE_ENDIAN)
+                                      .putInt(getWifiInfo().getIpAddress())
+                                      .array())
                       .getHostAddress();
     } catch (Exception e) {
       return "unknown";
@@ -472,7 +482,16 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
   @ReactMethod(isBlockingSynchronousMethod = true)
   public boolean isBatteryChargingSync(){
     IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-    Intent batteryStatus = getReactApplicationContext().registerReceiver(null, ifilter);
+    Intent batteryStatus = null;
+
+    if (Build.VERSION.SDK_INT >= 34 && getReactApplicationContext().getApplicationInfo().targetSdkVersion >= 34) {
+      batteryStatus = getReactApplicationContext().registerReceiver(
+              null, ifilter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+      batteryStatus = getReactApplicationContext().registerReceiver(null, ifilter);
+    }
+
+
     int status = 0;
     if (batteryStatus != null) {
       status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
@@ -508,7 +527,15 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   public WritableMap getPowerStateSync() {
-    Intent intent = getReactApplicationContext().registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    Intent intent = null;
+
+    if (Build.VERSION.SDK_INT >= 34 && getReactApplicationContext().getApplicationInfo().targetSdkVersion >= 34) {
+      intent = getReactApplicationContext().registerReceiver(
+              receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED), Context.RECEIVER_NOT_EXPORTED);
+    } else {
+      intent = getReactApplicationContext().registerReceiver(receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    }
+
     return getPowerStateFromIntent(intent);
   }
 
@@ -517,7 +544,13 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   public double getBatteryLevelSync() {
-    Intent intent = getReactApplicationContext().registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    Intent intent = null;
+    if (Build.VERSION.SDK_INT >= 34 && getReactApplicationContext().getApplicationInfo().targetSdkVersion >= 34) {
+      intent = getReactApplicationContext().registerReceiver(
+              null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED), Context.RECEIVER_NOT_EXPORTED);
+    } else {
+      intent = getReactApplicationContext().registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    }
     WritableMap powerState = getPowerStateFromIntent(intent);
 
     if(powerState == null) {
